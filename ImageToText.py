@@ -37,4 +37,9 @@ if __name__ == '__main__':
     # This is the address where you have your image to be converted.
     text = ir.extract_text('D:\py\ss1.png', Language.ENG.value)
     print(text)
+<<<<<<< HEAD
 
+=======
+    #Hello!!
+    #hey say hello!!
+>>>>>>> 796b7c454cbb0c8b3b24852b8fa600c59815bea9
