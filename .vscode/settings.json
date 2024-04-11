@@ -1,3 +1,6 @@
 {
-  "workbench.settings.openDefaultSettings": false
+  "workbench.settings.openDefaultSettings": false,
+  "[python]": {
+    "editor.defaultFormatter": "Jota0222.multi-formatter"
+  }
 }
