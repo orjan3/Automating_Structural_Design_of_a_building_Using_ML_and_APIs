@@ -30,4 +30,3 @@ print(db)
 
 ColumnNames = ['fc', 'fy', 'Mu', 'b','ß', 'rho_opt', 'Ropt', 'dopt', 'Asopt']               # Exportar a Excel
 db.to_excel('JAAD.db.xlsx', index=False, columns=ColumnNames)
-
