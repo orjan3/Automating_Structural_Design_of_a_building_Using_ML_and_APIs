@@ -52,13 +52,13 @@ def Espaciamiento(b,numBar,cantBar):
             cantBar=int(input("Espaciamiento insuficiente. Introducir menor cantidad de barras: "))
     return round(s,2)
 
-def CuantiaMinima(fy, fc):
+def MinSteelRatio(fy, fc):
     
     pmin = np.maximum(1.4/fy,0.25*(fc)**0.5/fy)
     pmin = pd.Series(pmin, index=fy.index)
     return pmin
 
-def CuantiaMaxima(ß, fc, fy):
+def MaxSteelRatio(ß, fc, fy):
     eu = 0.003; et = 0.005
     rho_max = 0.85*ß*fc/fy*(eu/(eu+et))
     return rho_max

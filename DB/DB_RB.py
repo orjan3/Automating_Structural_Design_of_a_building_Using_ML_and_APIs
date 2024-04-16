@@ -1,6 +1,6 @@
 import pandas as pd, numpy as np, Calcs as calcs
 
-db = []; q=85; t=0.10; Φ=0.9; it=800; Q= 1+t
+d = []; q=85; t=0.10; Φ=0.9; it=800; Q= 1+t
 ls = np.linspace
 data_list = [
     {'fc': ls(21,56,it), 'fy': ls(420,420,it), 'Mu': ls(100,100,it),'b': ls(300,300,it)},
@@ -11,22 +11,42 @@ data_list = [
 
 # Itera sobre los diccionarios y crea DataFrames
 for data_dict in data_list:
-    db.append(pd.DataFrame(data_dict))
+    d.append(pd.DataFrame(data_dict))
 
+d = pd.concat(d, ignore_index=True)                                                       
 
-db = pd.concat(db, ignore_index=True)                                                       # Concatena los DataFrames en uno solo
+d['ß']=calcs.Beta(d['fc']) 
 
-db['ß']=calcs.Beta(db['fc'])                                                                # Calcular la columna 5 (ß)
+d['rho_min'] = calcs.MinSteelRatio(d['fy'], d['fc'])    
 
-db['rho_opt'] = 1/(q/(1+t)+(db['fy']/(0.85*db['fc'])))                                      # Calcular la columna 6 (Popt)
+d['rho_u'] = calcs.MaxSteelRatio(d['ß'], d['fc'], d['fy'])                                                               
 
-db['Ropt'] = 1/(db['rho_opt']*db['fy']*(1-(db['rho_opt']*db['fy']/(1.7*db['fc']))))**0.5    # Calcular la columna 7 (Ropt)
+d['rho_opt'] = 1/(q/(1+t)+(d['fy']/(0.85*d['fc'])))      
 
-db['dopt'] = (db['Ropt']*((db['Mu']/Φ)/db['b'])**0.5)*10**2                                 # Calcular la columna 8 (dopt)
+d['R_min'] = 1/(d['rho_u']*d['fy']*(1-d['rho_u']*d['fy']/(1.7*d['fc'])))**0.5
 
-db['Asopt'] = db['rho_opt']*db['dopt']*db['b']/10                                           # Calcular la columna 9 (Asopt)
+d['R_u'] = 1/(d['rho_min']*d['fy']*(1-d['rho_min']*d['fy']/(1.7*d['fc'])))**0.5
 
-print(db)   
+d['R_opt'] = 1/(d['rho_opt']*d['fy']*(1-d['rho_opt']*d['fy']/(1.7*d['fc'])))**0.5    
 
-ColumnNames = ['fc', 'fy', 'Mu', 'b','ß', 'rho_opt', 'Ropt', 'dopt', 'Asopt']               # Exportar a Excel
-db.to_excel('JAAD.db.xlsx', index=False, columns=ColumnNames)
+# Utiliza `&` para el operador `and` en pandas series
+mask = (d['rho_opt'] > d['rho_min']) & (d['rho_opt'] < d['rho_u'])
+
+# Aplica condiciones basadas en la máscara creada
+# Actualiza 'rho_opt' y 'R_opt' cuando se cumplen las condiciones
+d.loc[mask, 'rho_opt'] = d.loc[mask, 'rho_opt']
+d.loc[mask, 'R_opt'] = d.loc[mask, 'R_opt']
+
+# Verifica las demás condiciones y actualiza las columnas según corresponda
+d.loc[d['rho_opt'] <= d['rho_min'], 'rho_opt'] = d['rho_min']
+d.loc[d['rho_opt'] <= d['rho_min'], 'R_opt'] = d['R_u']
+
+d.loc[d['rho_opt'] >= d['rho_u'], 'rho_opt'] = d['rho_u']
+d.loc[d['rho_opt'] >= d['rho_u'], 'R_opt'] = d['R_min']
+
+d['d_opt'] = (d['R_opt']*((d['Mu']/Φ)/d['b'])**0.5)*10**2
+
+d['As_opt'] = d['rho_opt']*d['d_opt']*d['b']/10                                           
+
+ColumnNames = ['fc', 'fy', 'Mu', 'b','ß', 'rho_opt', 'R_opt', 'd_opt', 'As_opt']
+d.to_excel('SRB.xlsx', index=False, columns=ColumnNames)

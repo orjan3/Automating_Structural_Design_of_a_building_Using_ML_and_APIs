@@ -1,35 +1,58 @@
 import pandas as pd, numpy as np, Calcs as calcs
-fc = 20; fy = 400; b = 250; Mu = 150
+fc = 21; fy = 400; b = 250; Mu = 250
 
-db = []; q=85; t=0.10; Φ=0.9; it=800; Q= 1+t; eu=0.003; et=0.005
+d = []; q=15; t=0.10; Φ=0.9; it=800; Q= 1+t; eu=0.003; et=0.005
 ls = np.linspace
 data_list = [
     {'fc': ls(21,56,it), 'fy': ls(fy,fy,it), 'Mu': ls(Mu,Mu,it),'b': ls(b,b,it)},
     {'fc': ls(fc,fc,it), 'fy': ls(300,600,it), 'Mu': ls(Mu,Mu,it),'b': ls(b,b,it)},
     {'fc': ls(fc,fc,it), 'fy': ls(fy,fy,it), 'Mu': ls(50,300,it),'b': ls(b,b,it)},
-    {'fc': ls(fc,fc,it), 'fy': ls(fy,fy,it), 'Mu': ls(Mu,Mu,it),'b': ls(200,800,it)}
+    {'fc': ls(fc,fc,it), 'fy': ls(fy,fy,it), 'Mu': ls(Mu,Mu,it),'b': ls(250,800,it)}
 ]
 
 # Itera sobre los diccionarios y crea DataFrames
 for data_dict in data_list:
-    db.append(pd.DataFrame(data_dict))
+    d.append(pd.DataFrame(data_dict))
 
-db = pd.concat(db, ignore_index=True)                                                       # Concatena los DataFrames en uno solo
+d = pd.concat(d, ignore_index=True)                                                     
 
-db['ß']=calcs.Beta(db['fc'])       
+d['ß']=calcs.Beta(d['fc'])       
 
-db['rho_min'] = calcs.CuantiaMinima(db['fy'], db['fc'])         
+d['rho_min'] = calcs.MinSteelRatio(d['fy'], d['fc'])         
 
-db['rho_u'] = calcs.CuantiaMaxima(db['ß'], db['fc'], db['fy'])
+d['rho_u'] = calcs.MaxSteelRatio(d['ß'], d['fc'], d['fy'])
 
-db['rho_opt_p'] = (db['rho_u']*q*(db['rho_u']* db['fy']/(0.425*db['fc'])-(3+t))+(1-t)*Q)/(2*q*(1-t))
+d['R_min'] = 1/(d['rho_u']*d['fy']*(1-d['rho_u']*d['fy']/(1.7*d['fc'])))**0.5
 
-db['Ropt_p'] = 1/((db['fy']*(db['rho_u']*(1-(db['rho_u']*db['fy'])/(1.7*db['fc']))+db['rho_opt_p']*(1-t)))**0.5)
+d['R_u'] = 1/(d['rho_min']*d['fy']*(1-d['rho_min']*d['fy']/(1.7*d['fc'])))**0.5
 
-db['dopt'] = (db['Ropt_p']*((db['Mu']/Φ)/db['b'])**0.5)*10**2
+d['rho_opt'] = 1/((q/(1+t))+(d['fy']/(0.85*d['fc'])))  
 
-db['Asopt'] = (db['rho_u'] + db['rho_opt_p']) *db['b']*db['dopt'] /10
+d['R_opt'] = 1/(d['rho_opt']*d['fy']*(1-d['rho_opt']*d['fy']/(1.7*d['fc'])))**0.5 
 
-db['Asopt_p'] = db['rho_opt_p'] *db['b']*db['dopt'] /10
+# Utiliza `&` para el operador `and` en pandas series
+mask = (d['rho_opt'] > d['rho_min']) & (d['rho_opt'] < d['rho_u'])
 
-db.to_excel('db.xlsx', index=False)
+# Aplica condiciones basadas en la máscara creada
+# Actualiza 'rho_opt' y 'R_opt' cuando se cumplen las condiciones
+d.loc[mask, 'rho_opt'] = d.loc[mask, 'rho_opt']
+d.loc[mask, 'R_opt'] = d.loc[mask, 'R_opt']
+
+# Verifica las demás condiciones y actualiza las columnas según corresponda
+d.loc[d['rho_opt'] <= d['rho_min'], 'rho_opt'] = d['rho_min']
+d.loc[d['rho_opt'] <= d['rho_min'], 'R_opt'] = d['R_u']
+
+d.loc[d['rho_opt'] >= d['rho_u'], 'rho_opt'] = d['rho_u']
+d.loc[d['rho_opt'] >= d['rho_u'], 'R_opt'] = d['R_min']
+
+d['rho_opt_p'] = (d['rho_u']*q*(d['rho_u']* d['fy']/(0.425*d['fc'])-(3+t))+(1-t)*(1+t))/(2*q*(1-t))
+
+d['R_opt_p'] = 1/((d['fy']*(d['rho_u']*(1-(d['rho_u']*d['fy'])/(1.7*d['fc']))+d['rho_opt_p']*(1-t)))**0.5)
+
+d['d_opt'] = (d['R_opt_p']*((d['Mu']/Φ)/d['b'])**0.5)*10**2
+
+d['As_opt'] = (d['rho_u'] + d['rho_opt_p']) *d['b']*d['d_opt'] /10
+
+d['As_opt_p'] = d['rho_opt_p'] *d['b']*d['d_opt'] /10
+
+d.to_excel('d.xlsx', index=False)
