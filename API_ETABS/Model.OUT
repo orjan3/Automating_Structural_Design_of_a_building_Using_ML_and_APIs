@@ -1,0 +1,31 @@
+
+
+ ETABS Ultimate 64-bit 20.3.0 Build 2929 (Analysis Build 9907/64)               
+ File: D:\ToolBox\py\TEMA 1_ A...ienda utiilizando ML y APIs\API_ETABS\Model.OUT
+                                                                     
+                                                                       
+
+ D I S P L A C E M E N T   D E G R E E S   O F   F R E E D O M
+
+         (A) = Active DOF, equilibrium equation
+         (-) = Restrained DOF, reaction computed
+         (+) = Constrained DOF
+         (>) = External substructure DOF
+         ( ) = Null DOF
+
+  JOINTS              UX  UY  UZ  RX  RY  RZ
+   ~1197 TO      20    A   A   A   A   A   A
+       6 TO       5    -   -   -   -   -   -
+   ~1146 TO      49    A   A   A   A   A   A
+      35 TO      19                         
+      16 TO       3    -   -   -   -   -   -
+   ~1207 TO      98    A   A   A   A   A   A
+      42               -   -   -   -   -   -
+   ~1214 TO      64    A   A   A   A   A   A
+      41 TO       8    -   -   -   -   -   -
+   ~1228 TO      18    A   A   A   A   A   A
+      14 TO       2    -   -   -   -   -   -
+   ~1134 TO      43    A   A   A   A   A   A
+       1               -   -   -   -   -   -
+   ~1263 TO      17    A   A   A   A   A   A
+       4               -   -   -   -   -   -
