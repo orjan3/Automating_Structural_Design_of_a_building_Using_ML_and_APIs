@@ -1,7 +1,8 @@
 import pandas as pd, numpy as np, Calcs as calcs
-fc = 21; fy = 400; b = 250; Mu = 250
+from itertools import product
+fc = 40; fy = 420; b = 600; Mu = 800
 
-d = []; q=15; t=0.10; Φ=0.9; it=800; Q= 1+t; eu=0.003; et=0.005
+d = []; q=15; t=0.10; Φ=0.9; Q= 1+t; eu=0.003; et=0.005; it=5
 ls = np.linspace
 data_list = [
     {'fc': ls(21,34,it), 'fy': ls(fy,fy,it), 'Mu': ls(Mu,Mu,it),'b': ls(b,b,it)},
@@ -55,4 +56,6 @@ d['As_opt'] = (d['rho_u'] + d['rho_opt_p']) *d['b']*d['d_opt'] /10
 
 d['As_opt_p'] = d['rho_opt_p'] *d['b']*d['d_opt'] /10
 
-d.to_excel('prueba.xlsx', index=False)
+print (d)
+
+#d.to_excel('prueba.xlsx', index=False)
