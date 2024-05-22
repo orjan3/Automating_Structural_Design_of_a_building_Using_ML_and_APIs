@@ -55,3 +55,4 @@ for combo in combinations:
 
 final_df = pd.concat(results, ignore_index=True)
 final_df.to_excel('prueba1.xlsx', index=False)
+
