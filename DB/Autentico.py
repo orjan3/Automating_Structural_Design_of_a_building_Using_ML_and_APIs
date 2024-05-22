@@ -2,11 +2,15 @@ import pandas as pd
 import numpy as np
 import Calcs as calcs
 from itertools import product
-it=18
-fc_values = np.linspace(21, 35, it)
-fy_values = np.linspace(415, 435, it)
-Mu_values = np.linspace(50, 600, it)
-b_values  = np.linspace(200, 600, it)
+it=1
+fcmin= 21; fcmax= 35
+fymin=415; fymax=435
+Mumin=50 ; Mumax=600
+bmin= 200; bmax= 600
+fc_values = np.linspace(fcmin, fcmax, it)
+fy_values = np.linspace(fymin, fymax, it)
+Mu_values = np.linspace(Mumin, Mumax, it)
+b_values  = np.linspace(bmin, bmax, it)
 
 combinations = product(fc_values, fy_values, Mu_values, b_values)
 
@@ -53,6 +57,9 @@ for combo in combinations:
 
     results.append(df)
 
+# For model testing
+# print (df)
+
 final_df = pd.concat(results, ignore_index=True)
-final_df.to_excel('prueba1.xlsx', index=False)
+final_df.to_excel('db.xlsx', index=False)
 
