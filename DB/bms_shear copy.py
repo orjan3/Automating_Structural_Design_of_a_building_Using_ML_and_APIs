@@ -2,29 +2,40 @@ import pandas as pd
 import numpy as np
 import Calcs as calcs
 from itertools import product
-it=1
-fcmin= 21; fcmax= 35
-fymin=415; fymax=435
-Mumin=50 ; Mumax=600
-bmin= 200; bmax= 600
-fc_values = np.linspace(fcmin, fcmax, it)
-fy_values = np.linspace(fymin, fymax, it)
-Mu_values = np.linspace(Mumin, Mumax, it)
-b_values  = np.linspace(bmin, bmax, it)
 
-combinations = product(fc_values, fy_values, Mu_values, b_values)
+φt  = 0.90
+φc  = 0.65
+φVns= 0.75
+φVs = 0.60
+
+λ   = 1.0
+#dct = 50
+#dcb = 50
+Es  = 200000 
+
+it=1
+fcmin= 21 ; fcmax= 35
+fymin=415 ; fymax=435
+Mumin=50  ; Mumax=600
+bmin =200 ; bmax = 600
+Lmin =3000; Lmax =10000
+
+fc = np.linspace(fcmin, fcmax, it)
+fy = np.linspace(fymin, fymax, it)
+Mu = np.linspace(Mumin, Mumax, it)
+b  = np.linspace(bmin, bmax, it)
+L  = np.linspace(Lmin, Lmax, it)
+
+combinations = product(fc, fy, Mu, b, L, Lmax)
 
 results = []
 
 for combo in combinations:
-    fc, fy, Mu, b = combo
+    fc, fy, Mu, b, L = combo
+    df = pd.DataFrame({'fc': [fc],'fy': [fy],'Mu': [Mu],'b': [b],'L': [L]})
+    df['Ec'] = 4700*df['fc']**0.5
+
     
-    df = pd.DataFrame({
-        'fc': [fc],
-        'fy': [fy],
-        'Mu': [Mu],
-        'b': [b]
-    })
 
     df['ß'] = calcs.Beta(df['fc'])       
     df['rho_min'] = calcs.MinSteelRatio(df['fy'], df['fc'])         
@@ -62,4 +73,3 @@ for combo in combinations:
 
 final_df = pd.concat(results, ignore_index=True)
 final_df.to_excel('db.xlsx', index=False)
-
