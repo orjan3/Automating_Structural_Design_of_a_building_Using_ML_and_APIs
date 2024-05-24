@@ -50,11 +50,11 @@ for combo in combinations:
 
     df['R_opt_p'] = 1/((df['fy']*(df['rho_u']*(1-(df['rho_u']*df['fy'])/(1.7*df['fc']))+df['rho_opt_p']*(1-0.10)))**0.5)
 
-    df['d_opt'] = (df['R_opt_p']*((df['Mu']/0.9)/df['b'])**0.5)*10**2
+    df['d_opt'] = (df['R_opt_p']*((df['Mu']/0.9)/df['b'])**0.5)*10**2 #cm
 
-    df['As_opt'] = (df['rho_u'] + df['rho_opt_p']) *df['b']*df['d_opt'] /10
+    df['As_opt'] = (df['rho_u'] + df['rho_opt_p']) *df['b']*df['d_opt']/10 #cm2
 
-    df['As_opt_p'] = df['rho_opt_p'] *df['b']*df['d_opt'] /10
+    df['As_opt_p'] = df['rho_opt_p'] *df['b']*df['d_opt'] /10 #cm2
 
     results.append(df)
 
