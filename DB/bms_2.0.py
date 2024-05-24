@@ -56,6 +56,7 @@ def process_combination(combo):
     db['Vs'] = db['Vu']/0.85-db['Vc'] #kN
 
     return db
+
 # Definir los rangos de los parámetros
 dct = 5
 it = 4
