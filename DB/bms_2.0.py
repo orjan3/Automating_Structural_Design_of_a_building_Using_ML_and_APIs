@@ -56,8 +56,8 @@ def process_combination(combo):
     # Actualizando para valores de 'Vs' fuera de los límites
     db.loc[db['Vs'] < 1.1/3.19*db['fc']**0.5*db['b']*db['d_opt'], 'Sección apropiada'] = "ok"
     db.loc[db['Vs'] >= 1.1/3.19*db['fc']**0.5*db['b']*db['d_opt'], 'Sección apropiada'] = "no"
-
-
+    
+    
     # Espaciamiento máximo 
     db['smax_1'] = np.maximum(60, db['d_opt'])
 
@@ -116,4 +116,3 @@ def main():
 if __name__ == '__main__':
     multiprocessing.freeze_support()
     main()
-

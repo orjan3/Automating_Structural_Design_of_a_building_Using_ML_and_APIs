@@ -4,99 +4,151 @@ import Calcs as calcs
 from itertools import product
 import multiprocessing
 
+db1=pd.read_excel('test.xlsx')
+
+eu= 0.003
+Es=2*10**6
+
 # Definir función para procesar cada combinación en paralelo
 def process_combination(combo):
-    fc, fy, Mu, b, L, CM, CV = combo
+    fc, fy, P, Mux, Muy, rec, h = combo
     
     db = pd.DataFrame({
-        'fc': [fc],
-        'fy': [fy],
-        'Mu': [Mu],
-        'b': [b],
-        'L': [L],
-        'CM': [CM],
-        'CV': [CV]
+        'fc' : [fc],
+        'fy' : [fy],
+        'P'  : [P],
+        'Mux': [Mux],
+        'Muy': [Muy],
+        'rec': [rec],
+        'h'  : [h]
     })
 
-    db['ß'] = calcs.Beta(db['fc'])       
-    db['rho_min'] = calcs.MinSteelRatio(db['fy'], db['fc'])         
-    db['rho_u'] = calcs.MaxSteelRatio(db['ß'], db['fc'], db['fy'])
-    db['R_min'] = 1/(db['rho_u']*db['fy']*(1-db['rho_u']*db['fy']/(1.7*db['fc'])))**0.5
-    db['R_u'] = 1/(db['rho_min']*db['fy']*(1-db['rho_min']*db['fy']/(1.7*db['fc'])))**0.5
-    db['rho_opt'] = 1/((15/(1+0.10))+(db['fy']/(0.85*db['fc'])))  
-    db['R_opt'] = 1/(db['rho_opt']*db['fy']*(1-db['rho_opt']*db['fy']/(1.7*db['fc'])))**0.5 
+    # Variables adicionales requeridas por el código adaptado
+    c = 0.5
+    db['Ag'] = db1['b'] * db['h']  # Área bruta de la sección (cm²)
 
-    # Para los valores de 'rho_opt' fuera de los límites, actualiza directamente 'rho_opt' y 'R_opt'
-    db.loc[db['rho_opt'] <= db['rho_min'], ['rho_opt', 'R_opt']] = db[['rho_min', 'R_u']].values
-    db.loc[db['rho_opt'] >= db['rho_u'], ['rho_opt', 'R_opt']] = db[['rho_u', 'R_min']].values
+    # Aquí se asumirá que la distribución es simétrica. Adaptar según sea necesario
+    numBarExt = 8  # Ejemplo: número de barras externas
+    numBarInt = 8
+    cantBarX = 3  # Ejemplo: cantidad de barras en 'X'
+    cantBarY = 4  # Ejemplo: cantidad de barras en 'Y'
 
-    db['rho_opt_p'] = (db['rho_u']*15*(db['rho_u']* db['fy']/(0.425*db['fc'])-(3+0.10))+(1-0.10)*(1+0.10))/(2*15*(1-0.10))
-    db['R_opt_p'] = 1/((db['fy']*(db['rho_u']*(1-(db['rho_u']*db['fy'])/(1.7*db['fc']))+db['rho_opt_p']*(1-0.10)))**0.5)
-    db['d_opt'] = (db['R_opt_p']*((db['Mu']/0.9)/db['b'])**0.5)*10**2 #cm
-    db['As_opt'] = (db['rho_u'] + db['rho_opt_p']) *db['b']*db['d_opt']/10 #cm2
-    db['As_opt_p'] = db['rho_opt_p'] *db['b']*db['d_opt'] /10 #cm2
+    As = np.zeros([1, cantBarY])
+    Ast = 0
 
-    db['a']=db['fy']*10*((db['As_opt']-db['As_opt_p']))/(0.85*db['fc']*10*db['b']/10) #cm
-
-    db['Mn1']=(db["As_opt"]*db['fy']*10*(db["d_opt"]-db['a']/2))/10**4 #kg.cm a kN.m
-    db['Mn2']=(db["As_opt_p"]*db['fy']*10*(db["d_opt"]-dct))/10**4 #kg.cm a kN.m
-    db['Mn']=db['Mn1']+db['Mn2'] #kN.m
-    db['Mn_pr']=db['Mn']*1.25 #kN.m
-
-    db['wu'] = 1.25*(db['CM'] + db['CV']) #kN/m
-    db['Vu'] = (db['Mn_pr']*2)/(db['L']*10**-3)+db['wu']*(db['L']*10**-3)/2 #kN
-    db['Vc'] = (1/6*(db['fc'])**0.5*db['b']*10**-3*db['d_opt']*10**-1)*10**3 #kN
-    db['Vs'] = np.maximum(db['Vu']/0.85-db['Vc'], 0)
-
-    # Verificando
-    # Actualizando para valores de 'Vs' fuera de los límites
-    db.loc[db['Vs'] < 2.1/3.19*db['fc']**0.5*db['b']*db['d_opt'], 'Sección'] = "ok"
-    db.loc[db['Vs'] >= 2.1/3.19*db['fc']**0.5*db['b']*db['d_opt'], 'Sección'] = "no"
-
-    # Actualizando para valores de 'Vs' fuera de los límites
-    db.loc[db['Vs'] < 1.1/3.19*db['fc']**0.5*db['b']*db['d_opt'], 'Sección apropiada'] = "ok"
-    db.loc[db['Vs'] >= 1.1/3.19*db['fc']**0.5*db['b']*db['d_opt'], 'Sección apropiada'] = "no"
-
-
-    # Espaciamiento máximo 
-    db['smax_1'] = np.maximum(60, db['d_opt'])
-
-    # Zona de confinamiento
-    # Crear los arrays unidimensionales con los valores correspondientes
-    values = [
-        db['d_opt'] / 4,
-        np.full_like(db['d_opt'], 10*3/4*2.54),
-        np.full_like(db['d_opt'], 24*3/8*2.54),
-        np.full_like(db['d_opt'], 30)
-    ]
+    for i in range(cantBarY - 2):
+        As[0, i + 1] = calcs.CantidadAcero(numBarInt, 2)  # Usar calcs para cálculo de acero
+        Ast += As[0, i + 1]
     
-    # Pasar los arrays a np.maximum.reduce() para obtener el máximo
-    db['smax_2'] = np.maximum.reduce(values)
-    db['smax'] = np.maximum(db['smax_1'],db['smax_2'])
+    As[0, 0] = calcs.CantidadAcero(numBarInt, cantBarX - 2) + calcs.CantidadAcero(numBarExt, 2)
+    As[0, cantBarY - 1] = calcs.CantidadAcero(numBarInt, cantBarX - 2) + calcs.CantidadAcero(numBarExt, 2)
+    db['Ast'] += As[0, 0] + As[0, cantBarY - 1]
+    
+    db['Po'] = (0.85 * fc * (db['Ag'] - Ast) + Ast * fy) * 10**-3
+    Pn = 0.8 * db['Po']
+    ØPn = 0.7 * Pn
+    dp = numBarExt / 8 * 2.54 / 2 + rec  # Øest is assumed as part of dp calculation
+    s = (h - 2 * dp - (cantBarY - 1) * calcs.Diametro(numBarInt)) / (cantBarY - 1)
+    d = h - dp
+
+    it = 10  # Número de iteraciones, ajustar según sea necesario
+    incremento = 0.2
+
+    m = np.zeros([it, cantBarY + 5])
+    for i in range(it):
+        m[i, 0] = c
+        if c * calcs.Beta(d['fc']) < h:
+            a = c * calcs.Beta(d['fc'])
+        else:
+            a = h
+        # fs1    
+        if Es * eu * (c - dp) / c < -d['fy']:
+            m[i, 1] = -fy
+        elif Es * eu * (c - dp) / c > d['fy']:
+            m[i, 1] = fy
+        else:
+            m[i, 1] = Es * eu * (c - dp) / c
+        # fs último
+        if Es * eu * (c - d) / c < -fy:
+            m[i, cantBarY] = -fy
+        elif Es * eu * (c - d) / c > fy:
+            m[i, cantBarY] = fy 
+        else:
+            m[i, cantBarY] = Es * eu * (c - d) / c    
+
+        Asfs = 0
+        Mn = 0
+        Pn = 0
+        for j in range(cantBarY - 2):
+            brazo = 0
+            if Es * eu * (c - (dp + (j + 1) * numBarInt / 8 * 2.54 + 2 * (j + 1) * s)) / c < -fy:
+                m[i, j + 2] = -fy
+            elif Es * eu * (c - (dp + (j + 1) * numBarInt / 8 * 2.54 + (j + 1) * s)) / c > fy:
+                m[i, j + 2] = fy
+            else:
+                m[i, j + 2] = Es * eu * (c - (dp + (j + 1) * numBarInt / 8 * 2.54 + (j + 1) * s)) / c
+            brazo = (h / 2 - (dp + (j + 1) * numBarInt / 8 * 2.54 + (j + 1) * s))
+            Mn += As[0, j + 1] * m[i, j + 2] * brazo
+            Asfs += As[0, j + 1] * m[i, j + 2]
+        
+        Pn = (0.85 * fc * a * b + As[0, 0] * m[i, 1] + As[0, cantBarY - 1] * m[i, cantBarY] + Asfs) * 10**-3
+        Mn = (0.85 * fc * a * b * (h / 2 - a / 2) + As[0, 0] * m[i, 1] * (h / 2 - dp) + As[0, cantBarY - 1] * m[i, cantBarY] * (h / 2 - d) + Mn) * 10**-5
+        
+        # Condicionales adaptados a formato de DataFrame
+        db.loc[db.index == i, 'Mn'] = Mn
+        db.loc[db.index == i, 'Pn'] = Pn
+
+        if Mn < 0:
+            Mn = 0
+        db.loc[db.index == i, 'Mn'] = Mn
+
+        if Pn > 0.8 * Po:
+            Pn = 0.8 * Po
+        db.loc[db.index == i, 'Pn'] = Pn
+        
+        if Pn >= 0.1 * fc * Ag * 10**-3: 
+            ØMn = Mn * 0.7
+        elif Pn <= 0:
+            ØMn = Mn * 0.9
+        else:
+            ØMn = Mn * (0.7 + 0.2 * (1 - Pn / (0.1 * fc * Ag * 10**-3)))
+        db.loc[db.index == i, 'ØMn'] = ØMn
+
+        if Pn >= 0.1 * fc * Ag * 10**-3:
+            ØPn = Pn * 0.7
+        elif Pn <= 0:
+            ØPn = Pn * 0.9
+        else:
+            ØPn = Pn * (0.7 + 0.2 * (1 - Pn / (0.1 * fc * Ag * 10**-3)))
+        db.loc[db.index == i, 'ØPn'] = ØPn
+
+        c += incremento
 
     return db
 
 # Definir los rangos de los parámetros
-dct = 5 # recubrimiento
+
 it = 2
+
 fcmin, fcmax = 21, 35  # MPa
-fymin, fymax = 415, 435  # MPa
-Mumin, Mumax = 50, 600  # kN.m
-bmin, bmax = 200, 600  # mm
-Lmin, Lmax = 3000, 10000  # mm
-CMmin, CMmax = 20, 80  # kN/m
-CVmin, CVmax = 30, 110  # kN/m
+fymin, fymax = 21, 35  # MPa
+Pmin, Pmax = 21, 35  # MPa
+Muxmin, Muxmax = 415, 435  # MPa
+Muymin, Muymax = 50, 600  # kN.m
+recmin, recmax = 200, 600  # mm
+hmin, hmax = 3000, 10000  # mm
 
 # Generar las combinaciones de parámetros
-fc = np.linspace(fcmin, fcmax, it)
-fy = np.linspace(fymin, fymax, it)
-Mu = np.linspace(Mumin, Mumax, it)
-b  = np.linspace(bmin, bmax, it)
-L  = np.linspace(Lmin, Lmax, it)
-CM = np.linspace(CMmin, CMmax, it)
-CV = np.linspace(CVmin, CVmax, it)
 
-combinations = product(fc, fy, Mu, b, L, CM, CV)
+fc  = np.linspace(fcmin, fcmax, it)
+fy  = np.linspace(fymin, fymax, it)
+P = np.linspace(Pmin, Pmax, it)
+Mux = np.linspace(fymin, fymax, it)
+Muy = np.linspace(Muymin, Muymax, it)
+rec  = np.linspace(recmin, recmax, it)
+h  = np.linspace(hmin, hmax, it)
+
+combinations = product(fc, fy, P, Mux, Muy, rec, h)
 
 # Configurar el multiprocessing
 def main():
@@ -108,6 +160,7 @@ def main():
 
     # Concatenar los resultados en un solo DataFrame
     db = pd.concat(results, ignore_index=True)
+    db = pd.concat([db1, db], axis=1)
 
     # Exportar a Excel
     #db.to_excel('db_practice_3.xlsx', index=False)
@@ -116,4 +169,3 @@ def main():
 if __name__ == '__main__':
     multiprocessing.freeze_support()
     main()
-
