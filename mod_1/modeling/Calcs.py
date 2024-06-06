@@ -16,6 +16,15 @@ def Diametro(numBar):
             break
     return round(diametro[0,i],3)
 
+def Beta1(fc):
+    if fc<=280:
+        ß=0.85
+    elif 280<fc and fc<560:
+        ß=0.85-(0.85-0.65)/280*(fc-280)
+    elif 560<fc:
+        ß=0.65
+    return ß
+
 def Beta(fc):
     ß = pd.Series(index=fc.index) 
     ß[fc <= 28] = 0.85

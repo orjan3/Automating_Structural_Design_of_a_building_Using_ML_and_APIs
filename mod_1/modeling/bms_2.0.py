@@ -78,7 +78,7 @@ def process_combination(combo):
 
 # Definir los rangos de los parámetros
 dct = 5 # recubrimiento
-it = 6
+it = 2
 fcmin, fcmax = 21, 35  # MPa
 fymin, fymax = 415, 435  # MPa
 Mumin, Mumax = 50, 600  # kN.m
@@ -110,8 +110,8 @@ def main():
     db = pd.concat(results, ignore_index=True)
 
     # Exportar a Excel
-    db.to_excel('db_2.0.xlsx', index=False)
-    #print(db)
+    #db.to_excel('db_2.0.xlsx', index=False)
+    print(db)
 
 if __name__ == '__main__':
     multiprocessing.freeze_support()

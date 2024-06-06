@@ -1,4 +1,8 @@
+import sys
 from pathlib import Path
+
+# Añade el directorio raíz del proyecto a la ruta de búsqueda
+sys.path.append(str(Path(__file__).resolve().parents[1]))
 
 import typer
 from loguru import logger
