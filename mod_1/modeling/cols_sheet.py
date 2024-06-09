@@ -1,17 +1,28 @@
+import sys
+from pathlib import Path
+
+calcs_dir = Path(r"D:\ToolBox\.py\rep_1\mod_1\ScriptTools").resolve()
+sys.path.append(str(calcs_dir))
+
 from typing import DefaultDict
 from sqlalchemy import DDL
 from tabulate import tabulate as tb, tabulate_formats ; import numpy as np
 import math; pi = math.pi; import Calcs as steel; from matplotlib import pyplot as plt 
 
-fc=210; fy=4200; Ec=15000*fc**0.5; Es=2*10**6; rec=4; eu=0.003; Øest=3/8*2.54; ß=steel.Beta1(fc)
-def DiagInter(Mux,Muy,Pu):
-    c=0.5; h=35; b=30; Ag=b*h; x=str(input("Distribucion Simetrica? (y/n) :"))
+
+def DiagInter(b,h,Mux,Muy,Pu,numBarExt,numBarInt,cantBarX,cantBarY,fc,fy):
+    cantBarY = int(cantBarY)
+    #fc=280; fy=4200; 
+    Ec=15000*fc**0.5; Es=2*10**6; rec=4; eu=0.003; Øest=3/8*2.54; ß=steel.Beta1(fc)
+    c=0.5; 
+    #h=55; b=40 
+    Ag=b*h; x='n'
     if x=="y":
-        print("Todas las barras son simétricas.")
-        numBarExt=int(input("Número de barra: "))
-        numBarInt=numBarExt
-        cantBarX=int(input("Cantidad barras en 'X': "))
-        cantBarY=int(input("Cantidad barras en 'Y': "))
+        #print("Todas las barras son simétricas.")
+        #numBarExt=int(input("Número de barra: "))
+        #numBarInt=numBarExt
+        #cantBarX=int(input("Cantidad barras en 'X': "))
+        #cantBarY=int(input("Cantidad barras en 'Y': "))
         As=np.zeros([1,cantBarY]); Ast=0
         for i in range (cantBarY-2):
             As[0,i+1]=steel.CantidadAcero(numBarInt,2)
@@ -20,11 +31,11 @@ def DiagInter(Mux,Muy,Pu):
         As[0,cantBarY-1]=steel.CantidadAcero(numBarInt,cantBarX-2)+steel.CantidadAcero(numBarExt,2)
         Ast=Ast+As[0,0]+As[0,cantBarY-1]
     elif x=="n":
-        print("Distribucion de barras asimetrica.")
-        numBarExt=int(input("Número para barra externa: "))
-        numBarInt=int(input("Número para barra interna: "))
-        cantBarX=int(input("Cantidad barras en 'X': "))
-        cantBarY=int(input("Cantidad barras en 'Y': "))
+        #print("Distribucion de barras asimetrica.")
+        #numBarExt=int(input("Número para barra externa: "))
+        #numBarInt=int(input("Número para barra interna: "))
+        #cantBarX=int(input("Cantidad barras en 'X': "))
+        #cantBarY=int(input("Cantidad barras en 'Y': "))
         As=np.zeros([1,cantBarY]); Ast=0
         for i in range (cantBarY-2):
             As[0,i+1]=steel.CantidadAcero(numBarInt,2)
@@ -34,7 +45,7 @@ def DiagInter(Mux,Muy,Pu):
         Ast=Ast+As[0,0]+As[0,cantBarY-1]
     
     Po=(0.85*fc*(Ag-Ast)+Ast*fy)*10**-3; Pn=0.8*Po; ØPn=0.7*Pn; dp=numBarExt/8*2.54/2+rec+Øest; s=(h-2*dp-(cantBarY-1)*steel.Diametro(numBarInt))/(cantBarY-1)
-    d=h-dp; it=int(input("# de iteraciones: ")); m=np.zeros([it,cantBarY+5]);incremento=0.2
+    d=h-dp; it=5000; m=np.zeros([it,cantBarY+5]);incremento=0.2
     
     for i in range (it):
         m[i,0]=c
@@ -105,11 +116,15 @@ def DiagInter(Mux,Muy,Pu):
     b=['Mn','Pn','ØMn','ØPn']
     np.append(a,b,axis=0)
 
-    print(tb(m, headers=np.append(a,b,axis=0),tablefmt="psql"))
+    #print(tb(m, headers=np.append(a,b,axis=0),tablefmt="psql"))
 
     Mn=m[:,cantBarY+1]; Pn=m[:,cantBarY+2]; ØMn=m[:,cantBarY+3]; ØPn=m[:,cantBarY+4]
     
-    plt.plot(Mn,Pn,ØMn,ØPn,Mux,Pu,Muy,Pu,c="black",marker="o",mfc="black",ms=5); plt.show()
+    #plt.plot(Mn,Pn,ØMn,ØPn,Mux,Pu,Muy,Pu,c="black",marker="o",mfc="black",ms=5); plt.show()
+    ØPnx = ØPn[np.argmin(np.abs(Mux - ØMn))]
+    ØPny = ØPn[np.argmin(np.abs(Muy - ØMn))]
+    ØMnx = ØMn[np.argmin(np.abs(Pu - ØPn))]
+    ØMny = ØMn[np.argmin(np.abs(Pu - ØPn))]
     for i in range (len(ØPn)):
         if abs(Mux-ØMn[i])<0.1:
             ØPnx=ØPn[i]
@@ -118,29 +133,27 @@ def DiagInter(Mux,Muy,Pu):
         if abs(Pu-ØPn[i])<0.5:
             ØMnx=ØMn[i]
             ØMny=ØMn[i]
-    print("ØPnx: ",ØPnx)
-    print("ØPny: ",ØPny)
-    print("ØMnx: ",ØMnx);print("ØMny: ",ØMny);print("Po: ",Po) 
+    if ØPnx is None or ØPny is None or ØMnx is None or ØMny is None:
+        raise ValueError("Couldn't find a valid ØPnx, ØPny, ØMnx, or ØMny")
+    #print("ØPnx: ",ØPnx)
+    #print("ØPny: ",ØPny)
+    #print("ØMnx: ",ØMnx);print("ØMny: ",ØMny);print("Po: ",Po) 
     Ø=0.7   
     #Bressler 1
     if ((1/(ØPnx/0.7)+1/(ØPny/0.7)-1/Po)**-1)*0.7>Pu:
-        print(((1/(ØPnx/Ø)+1/(ØPny/Ø)-1/Po)**-1)*Ø,">",Pu)
-        print("Cumple con primera condición de Bressler")
+        #print(((1/(ØPnx/Ø)+1/(ØPny/Ø)-1/Po)**-1)*Ø,">",Pu)
+        a = 1
     else:
-        print(((1/(ØPnx/Ø)+1/(ØPny/Ø)-1/Po)**-1)*Ø,"<",Pu)
-        
-        print("No cumple con primera condición de Bressler")
+        #print(((1/(ØPnx/Ø)+1/(ØPny/Ø)-1/Po)**-1)*Ø,"<",Pu)
+        a= 0
     #Bressler 2 
     if Mux/ØMnx+Muy/ØMny<1:
-        print(Mux/ØMnx+Muy/ØMny)
-        print("Cumple con segunda condición de Bressler")
+        #print(Mux/ØMnx+Muy/ØMny)
+        b= 1
     else:
-        print(Mux/ØMnx+Muy/ØMny)
-        print("No cumple con segunda condición de Bressler")
+        #print(Mux/ØMnx+Muy/ØMny)
+        b= 0
+    
+    return a, b, Ast
 
-    return ()
-    if __name__ == '__main__':
-        DiagInter()
-
-DiagInter(13,13,200) 
-# y,8,8,8,200
+#print(DiagInter(30,40,150,150,200,8,8,8,8,210,4200))

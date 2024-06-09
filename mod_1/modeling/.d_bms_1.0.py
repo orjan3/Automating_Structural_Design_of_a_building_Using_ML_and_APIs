@@ -1,3 +1,9 @@
+import sys
+from pathlib import Path
+
+calcs_dir = Path(r"D:\ToolBox\.py\rep_1\mod_1\ScriptTools").resolve()
+sys.path.append(str(calcs_dir))
+
 import pandas as pd
 import numpy as np
 import Calcs as calcs

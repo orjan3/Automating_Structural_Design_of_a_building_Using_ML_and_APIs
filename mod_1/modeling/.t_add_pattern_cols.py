@@ -8,20 +8,21 @@ def generate_pattern(num_repeats, pattern):
 
 def main():
     # Lectura de Datos
-    file_path = r'D:\ToolBox\.py\rep_1\data\processed\datos_actualizado.xlsx'
+    file_path = r'D:\ToolBox\.py\rep_1\mod_1\TestLab\test.xlsx'
     db = pd.read_excel(file_path)
 
     # Lista de nuevas columnas que deseas crear
     new_columns = ['Pu', 'Mux', 'Muy', 'numBarExt', 'numBarInt', 'cantBarX', 'cantBarY']
 
     # Generar una secuencia de valores desde 500 hasta 2000 para la columna F
-    pattern_Pu = np.linspace(1000, 3000, 216)
-    pattern_Mux = np.linspace(50, 150, 216)
-    pattern_Muy = np.linspace(50, 150, 216)
+    pattern_Pu = np.linspace(30, 500, 471)
+    pattern_Mux = np.linspace(5, 50, 46)
+    pattern_Muy = np.linspace(5, 50, 46)
     pattern_numBarExt = np.linspace(5, 10, 6)
     pattern_numBarInt = np.linspace(5, 10, 6)
-    pattern_cantBarX = np.linspace(5, 15, 11)
-    pattern_cantBarY = np.linspace(5, 15, 11)
+    pattern_cantBarX = np.linspace(6, 12, 7)
+    pattern_cantBarY = np.linspace(6, 116, 7)
+    pattern_h = np.linspace(25, 80, 7)
     # Calcular el número de repeticiones y el tamaño de los bloques
     num_repeats_Pu = len(db) // len(pattern_Pu)
     num_repeats_Mux = len(db) // len(pattern_Mux)
@@ -30,6 +31,7 @@ def main():
     num_repeats_numBarInt = len(db) // len(pattern_numBarInt)
     num_repeats_cantBarX = len(db) // len(pattern_cantBarX)
     num_repeats_cantBarY = len(db) // len(pattern_cantBarY)
+    num_repeats_h = len(db) // len(pattern_h)
     num_processes = multiprocessing.cpu_count()
     # Crear un Pool de procesos
     with multiprocessing.Pool(processes=num_processes) as pool:
@@ -62,6 +64,10 @@ def main():
         extra_cantBarY = num_repeats_cantBarY % num_processes
         num_chunks_cantBarY = [chunk_size_cantBarY + (1 if i < extra_cantBarY else 0) for i in range(num_processes)]
         results_cantBarY = pool.starmap(generate_pattern, [(n, pattern_cantBarY) for n in num_chunks_cantBarY])
+        chunk_size_h = num_repeats_h // num_processes
+        extra_h = num_repeats_h % num_processes
+        num_chunks_h = [chunk_size_h + (1 if i < extra_h else 0) for i in range(num_processes)]
+        results_h = pool.starmap(generate_pattern, [(n, pattern_h) for n in num_chunks_h])
     # Combinar los resultados
     repeated_pattern_Pu = np.concatenate(results_Pu)
     repeated_pattern_Mux = np.concatenate(results_Mux)
@@ -70,6 +76,7 @@ def main():
     repeated_pattern_numBarInt = np.concatenate(results_numBarInt)
     repeated_pattern_cantBarX = np.concatenate(results_cantBarX)
     repeated_pattern_cantBarY = np.concatenate(results_cantBarY)
+    repeated_pattern_h = np.concatenate(results_h)
     # Asegurar que la longitud de repeated_pattern_numBarExt sea igual a la del DataFrame
     if len(repeated_pattern_Pu) < len(db):
         repeated_pattern_Pu = np.concatenate([repeated_pattern_Pu, pattern_Pu[:len(db) - len(repeated_pattern_Pu)]])
@@ -84,7 +91,9 @@ def main():
     if len(repeated_pattern_cantBarX) < len(db):
         repeated_pattern_cantBarX = np.concatenate([repeated_pattern_cantBarX, pattern_cantBarX[:len(db) - len(repeated_pattern_cantBarX)]])
     if len(repeated_pattern_cantBarY) < len(db):
-            repeated_pattern_cantBarY = np.concatenate([repeated_pattern_cantBarY, pattern_cantBarY[:len(db) - len(repeated_pattern_cantBarY)]])
+        repeated_pattern_cantBarY = np.concatenate([repeated_pattern_cantBarY, pattern_cantBarY[:len(db) - len(repeated_pattern_cantBarY)]])
+    if len(repeated_pattern_h) < len(db):
+        repeated_pattern_h = np.concatenate([repeated_pattern_h, pattern_h[:len(db) - len(repeated_pattern_h)]])
     # Asignar nuevas columnas
     db['Pu'] = repeated_pattern_Pu
     db['Mux'] = repeated_pattern_Mux
@@ -93,10 +102,9 @@ def main():
     db['numBarInt'] = repeated_pattern_numBarInt
     db['cantBarX'] = repeated_pattern_cantBarX
     db['cantBarY'] = repeated_pattern_cantBarX
-    # Crear una nueva columna 'New_Column' multiplicando 'As_opt' por 'F'
-    #db['New_Column'] = db['fc'] * db['F']
+    db['h'] = repeated_pattern_h
     # Guardar el DataFrame actualizado en un nuevo archivo Excel
-    output_file_path = r'D:\ToolBox\.py\rep_1\data\processed\datos_actualizado.xlsx'
+    output_file_path = r'D:\ToolBox\.py\rep_1\mod_1\TestLab\test.xlsx'
     db.to_excel(output_file_path, index=False)
 
 if __name__ == '__main__':
