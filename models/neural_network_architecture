@@ -1,0 +1,26 @@
+digraph {
+	"Input Layer" [color=green shape=ellipse]
+	"Hidden Layer 1" [color=blue shape=ellipse]
+	"Hidden Layer 2" [color=blue shape=ellipse]
+	"Hidden Layer 3" [color=blue shape=ellipse]
+	"Hidden Layer 4" [color=blue shape=ellipse]
+	"Output Layer As_opt" [color=red shape=ellipse]
+	"Output Layer d_opt" [color=red shape=ellipse]
+	"Output Layer As_opt_p" [color=red shape=ellipse]
+	"Input Layer" -> "Hidden Layer 1"
+	"Hidden Layer 1" -> "Output Layer As_opt"
+	"Hidden Layer 1" -> "Output Layer d_opt"
+	"Hidden Layer 1" -> "Output Layer As_opt_p"
+	"Input Layer" -> "Hidden Layer 2"
+	"Hidden Layer 2" -> "Output Layer As_opt"
+	"Hidden Layer 2" -> "Output Layer d_opt"
+	"Hidden Layer 2" -> "Output Layer As_opt_p"
+	"Input Layer" -> "Hidden Layer 3"
+	"Hidden Layer 3" -> "Output Layer As_opt"
+	"Hidden Layer 3" -> "Output Layer d_opt"
+	"Hidden Layer 3" -> "Output Layer As_opt_p"
+	"Input Layer" -> "Hidden Layer 4"
+	"Hidden Layer 4" -> "Output Layer As_opt"
+	"Hidden Layer 4" -> "Output Layer d_opt"
+	"Hidden Layer 4" -> "Output Layer As_opt_p"
+}
